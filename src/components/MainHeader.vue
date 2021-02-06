@@ -2,7 +2,7 @@
    <header>
      <b-navbar variant="faded" type="light" class="header__shadow">
       <b-navbar-brand href="#">
-        BootstrapVue
+        Data MockUp
       </b-navbar-brand>
     </b-navbar>
    </header>
