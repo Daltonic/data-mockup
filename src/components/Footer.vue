@@ -3,8 +3,8 @@
     <hr />
     ©2021 Data Mockup. <br>
     <small>
-        Made by
-        <a href="https://github.com/Daltonic">Daltonic</a>
+        Made With ❤️ by
+        <a href="https://github.com/Daltonic">Daltonic 🔥</a>
     </small>
   </b-container>
 </template>
