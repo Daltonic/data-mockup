@@ -12,6 +12,14 @@
             <p>🚀 Sign into your account</p>
             <b-form>
               <b-form-group class="form-group">
+                <label for="fullname" class="sr-only">Fullname</label>
+                <b-input
+                  type="text"
+                  id="fullname"
+                  placeholder="Fullname"
+                />
+              </b-form-group>
+              <b-form-group class="form-group">
                 <label for="email" class="sr-only">Email</label>
                 <b-input
                   type="email"
@@ -31,8 +39,8 @@
             </b-form>
             <b-link to="/forget" class="text-primary login__link">Forgot password?</b-link>
             <b-card-text>
-              Don't have an account?
-              <b-link to="/signup" class="text-primary login__link">Register here</b-link> 
+              Already a member?
+              <b-link to="/login" class="text-primary login__link">SignIn here</b-link> 
               Or
               <b-link to="/signup" class="text-primary login__link">Demo 👈</b-link>
             </b-card-text>

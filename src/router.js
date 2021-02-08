@@ -17,6 +17,12 @@ export default new Router({
       name: 'login',
       meta: { requireAuth: true }
     },
+    {
+      path: '/signup',
+      component: () => import('./views/Register.vue'),
+      name: 'signup',
+      meta: { requireAuth: true }
+    },
   ],
   mode: 'history'
 })

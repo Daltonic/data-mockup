@@ -1,7 +1,7 @@
 <template>
   <div class="banner">
     <b-container class="banner__contents">
-      <h1 class="banner__title">Mock It Till You Make It</h1>
+      <h1 class="banner__title">Mock It Till You Make It 🚀</h1>
       <!-- <div class="banner__buttons">
         <button class="banner__button">Log In</button
         ><button class="banner__button">Sign Up</button>
