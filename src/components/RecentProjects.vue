@@ -16,7 +16,7 @@
       </b-col>
 
       <b-col v-for="n in 5" :key="n" cols lg="4" md="6" xs="12">
-        <b-link to="/" class="project__link text-dark">
+        <b-link :to="'/projects/' + n" class="project__link text-dark">
           <b-card class="project__card shadow-lg p-3 mb-5 rounded border-0">
             <b-card-body>
               <b-card-text class="project__text">

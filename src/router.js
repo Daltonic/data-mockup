@@ -23,6 +23,12 @@ export default new Router({
       name: 'signup',
       meta: { requireAuth: true }
     },
+    {
+      path: '/projects/:id',
+      component: () => import('./views/Project.vue'),
+      name: 'project',
+      meta: { requireAuth: true }
+    },
   ],
   mode: 'history'
 })

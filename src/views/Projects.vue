@@ -6,8 +6,8 @@
 </template>
 
 <script>
-import Banner from "@/components/Banner";
-import RecentProjects from "@/components/RecentProjects";
+import Banner from "@/components/Banner"
+import RecentProjects from "@/components/RecentProjects"
 export default {
   name: "projects",
   components: {
