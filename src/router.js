@@ -24,6 +24,12 @@ export default new Router({
       meta: { requireAuth: true }
     },
     {
+      path: '/mockups',
+      component: () => import('./views/MockUps.vue'),
+      name: 'mockups',
+      meta: { requireAuth: true }
+    },
+    {
       path: '/projects/:id',
       component: () => import('./views/Project.vue'),
       name: 'project',
