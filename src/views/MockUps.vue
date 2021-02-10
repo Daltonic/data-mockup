@@ -59,7 +59,6 @@
 
       <b-col lg="6" class="my-1">
         <b-form-group
-          label="Filter"
           label-for="filter-input"
           label-cols-sm="3"
           label-align-sm="right"
@@ -67,6 +66,9 @@
           class="mb-0"
         >
           <b-input-group size="sm">
+              <b-input-group-prepend>
+              <b-button variant="danger" v-b-modal.add-row-modal>Add Mockup</b-button>
+            </b-input-group-prepend>
             <b-form-input
               id="filter-input"
               v-model="filter"
@@ -75,7 +77,9 @@
             ></b-form-input>
 
             <b-input-group-append>
-              <b-button :disabled="!filter" @click="filter = ''">Clear</b-button>
+              <b-button :disabled="!filter" @click="filter = ''"
+                >Clear</b-button
+              >
             </b-input-group-append>
           </b-input-group>
         </b-form-group>
@@ -97,9 +101,8 @@
             :aria-describedby="ariaDescribedby"
             class="mt-1"
           >
-            <b-form-checkbox value="name">Name</b-form-checkbox>
-            <b-form-checkbox value="age">Age</b-form-checkbox>
-            <b-form-checkbox value="isActive">Active</b-form-checkbox>
+            <b-form-checkbox value="type">type</b-form-checkbox>
+            <b-form-checkbox value="tag">Tags</b-form-checkbox>
           </b-form-checkbox-group>
         </b-form-group>
       </b-col>
@@ -147,128 +150,185 @@
       :sort-by.sync="sortBy"
       :sort-desc.sync="sortDesc"
       :sort-direction="sortDirection"
+      class="shadow-lg rounded border-0"
       stacked="md"
       show-empty
-      small
+      :busy="loading"
       @filtered="onFiltered"
     >
-      <template #cell(name)="row">
-        {{ row.value.first }} {{ row.value.last }}
+      <template #cell(type)="row">
+        {{ row.value }}
+      </template>
+
+      <template #cell(tags)="row">
+        <b-tag
+          v-for="tag in row.value"
+          :key="tag"
+          class="text-capitalize"
+          >{{ tag }}</b-tag
+        >
+      </template>
+
+      <template #table-busy>
+        <div class="text-center text-danger my-2">
+          <b-spinner class="align-middle"></b-spinner>
+          <strong> Loading...</strong>
+        </div>
+      </template>
+
+      <template #empty="scope">
+        <h4 class="lead text-center">
+          😔 <br />
+          {{ scope.emptyText }}
+        </h4>
       </template>
 
       <template #cell(actions)="row">
-        <b-button size="sm" @click="info(row.item, row.index, $event.target)" class="mr-1">
-          Info modal
+        <b-button
+          size="sm"
+          @click="editRow(row.item, row.index, $event.target)"
+          class="mr-1"
+        >
+          Edit
         </b-button>
-        <b-button size="sm" @click="row.toggleDetails">
-          {{ row.detailsShowing ? 'Hide' : 'Show' }} Details
+        <b-button
+          size="sm"
+          @click="remRow(row.index, $event.target)"
+          class="mr-1"
+          variant="danger"
+        >
+          Remove
         </b-button>
-      </template>
-
-      <template #row-details="row">
-        <b-card>
-          <ul>
-            <li v-for="(value, key) in row.item" :key="key">{{ key }}: {{ value }}</li>
-          </ul>
-        </b-card>
       </template>
     </b-table>
 
-    <!-- Info modal -->
-    <b-modal :id="infoModal.id" :title="infoModal.title" ok-only @hide="resetInfoModal">
-      <pre>{{ infoModal.content }}</pre>
+    <b-modal id="add-row-modal" centered title="Add New Row">
+      <b-container fluid>
+        <b-row>
+          <b-col cols md="12" class="my-3">
+            <b-form-input
+              required
+              v-model.trim="item.type"
+              placeholder="Column Name"
+            ></b-form-input>
+          </b-col>
+          <b-col cols md="12" class="my-3">
+              <b-form-tags
+              required
+              v-model="item.tags"
+              placeholder="Field Tags"
+              max="5"
+            ></b-form-tags>
+          </b-col>
+        </b-row>
+      </b-container>
+
+      <template #modal-footer="{ cancel }">
+        <b-button @click="cancel()"> Cancel </b-button>
+        <b-button variant="success" @click="addRow()"> Add Row </b-button>
+      </template>
+    </b-modal>
+    <b-modal id="edit-row-modal" centered title="Update Row Data">
+      <b-container fluid>
+        <b-row>
+          <b-col cols md="12" class="my-3">
+            <b-form-input
+              required
+              v-model.trim="item.type"
+              placeholder="Data Type"
+            ></b-form-input>
+          </b-col>
+          <b-col cols md="12" class="my-3">
+              <b-form-tags
+              required
+              v-model="item.tags"
+              placeholder="field tags"
+              max="5"
+            ></b-form-tags>
+          </b-col>
+        </b-row>
+      </b-container>
+
+      <template #modal-footer="{ cancel }">
+        <b-button @click="cancel()"> Cancel </b-button>
+        <b-button variant="success" @click="updateRow(item)">
+          Update Row
+        </b-button>
+      </template>
     </b-modal>
   </b-container>
 </template>
 
 <script>
-  export default {
-    data() {
-      return {
-        items: [
-          { isActive: true, age: 40, name: { first: 'Dickerson', last: 'Macdonald' } },
-          { isActive: false, age: 21, name: { first: 'Larsen', last: 'Shaw' } },
-          {
-            isActive: false,
-            age: 9,
-            name: { first: 'Mini', last: 'Navarro' },
-            _rowVariant: 'success'
-          },
-          { isActive: false, age: 89, name: { first: 'Geneva', last: 'Wilson' } },
-          { isActive: true, age: 38, name: { first: 'Jami', last: 'Carney' } },
-          { isActive: false, age: 27, name: { first: 'Essie', last: 'Dunlap' } },
-          { isActive: true, age: 40, name: { first: 'Thor', last: 'Macdonald' } },
-          {
-            isActive: true,
-            age: 87,
-            name: { first: 'Larsen', last: 'Shaw' },
-            _cellVariants: { age: 'danger', isActive: 'warning' }
-          },
-          { isActive: false, age: 26, name: { first: 'Mitzi', last: 'Navarro' } },
-          { isActive: false, age: 22, name: { first: 'Genevieve', last: 'Wilson' } },
-          { isActive: true, age: 38, name: { first: 'John', last: 'Carney' } },
-          { isActive: false, age: 29, name: { first: 'Dick', last: 'Dunlap' } }
-        ],
-        fields: [
-          { key: 'name', label: 'Person full name', sortable: true, sortDirection: 'desc' },
-          { key: 'age', label: 'Person age', sortable: true, class: 'text-center' },
-          {
-            key: 'isActive',
-            label: 'Is Active',
-            formatter: (value) => {
-              return value ? 'Yes' : 'No'
-            },
-            sortable: true,
-            sortByFormatted: true,
-            filterByFormatted: true
-          },
-          { key: 'actions', label: 'Actions' }
-        ],
-        totalRows: 1,
-        currentPage: 1,
-        perPage: 5,
-        pageOptions: [5, 10, 15, { value: 100, text: "Show a lot" }],
-        sortBy: '',
-        sortDesc: false,
-        sortDirection: 'asc',
-        filter: null,
-        filterOn: [],
-        infoModal: {
-          id: 'info-modal',
-          title: '',
-          content: ''
-        }
-      }
+export default {
+  data() {
+    return {
+      loading: false,
+      item: {tags: [], type: "", index: ''},
+      items: [],
+      fields: [
+        {
+          key: "type",
+          label: "Data Type",
+          sortable: true,
+          sortDirection: "desc",
+        },
+        { key: "tags", label: "Tags", sortable: true, class: "text-center" },
+        { key: "actions", label: "Actions" },
+      ],
+      totalRows: 1,
+      currentPage: 1,
+      perPage: 5,
+      pageOptions: [5, 10, 15, { value: 100, text: "Show a lot" }],
+      sortBy: "",
+      sortDesc: false,
+      sortDirection: "asc",
+      filter: null,
+      filterOn: [],
+    };
+  },
+  computed: {
+    sortOptions() {
+      // Create an options list from our fields
+      return this.fields
+        .filter((f) => f.sortable)
+        .map((f) => {
+          return { text: f.label, value: f.key };
+        });
     },
-    computed: {
-      sortOptions() {
-        // Create an options list from our fields
-        return this.fields
-          .filter(f => f.sortable)
-          .map(f => {
-            return { text: f.label, value: f.key }
-          })
-      }
+  },
+  mounted() {
+    // Set the initial number of items
+    this.totalRows = this.items.length;
+  },
+  methods: {
+    onFiltered(filteredItems) {
+      // Trigger pagination to update the number of buttons/pages due to filtering
+      this.totalRows = filteredItems.length;
+      this.currentPage = 1;
     },
-    mounted() {
-      // Set the initial number of items
-      this.totalRows = this.items.length
+    addRow() {
+      this.items.unshift({ ...this.item });
+      this.onReset();
+      this.$bvModal.hide("add-row-modal");
     },
-    methods: {
-      info(item, index, button) {
-        this.infoModal.title = `Row index: ${index}`
-        this.infoModal.content = JSON.stringify(item, null, 2)
-        this.$root.$emit('bv::show::modal', this.infoModal.id, button)
-      },
-      resetInfoModal() {
-        this.infoModal.title = ''
-        this.infoModal.content = ''
-      },
-      onFiltered(filteredItems) {
-        // Trigger pagination to update the number of buttons/pages due to filtering
-        this.totalRows = filteredItems.length
-        this.currentPage = 1
-      }
-    }
-  }
+    remRow(index) {
+      this.items.splice(index, 1);
+    },
+    editRow(item, index) {
+      item.index = index;
+      this.item = item;
+      this.$bvModal.show("edit-row-modal");
+    },
+    updateRow(item) {
+      this.item[item.index] = item;
+      this.$bvModal.hide("edit-row-modal");
+    },
+    onReset() {
+      this.item.type = "";
+      this.item.tags = [];
+      this.item.index = "";
+    },
+  },
+};
 </script>
