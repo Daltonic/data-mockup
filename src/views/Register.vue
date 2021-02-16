@@ -1,70 +1,118 @@
 <template>
-  <b-contianer>
-    <b-row class="m-0">
-      <b-col cols md="7" class="ml-auto mr-auto">
-        <b-card
-          img-src="https://cdn.pixabay.com/photo/2017/07/08/11/33/white-2484120_960_720.png"
-          img-alt="Card image"
-          img-left
-          class="login__card shadow-lg rounded border-0"
-        >
-          <b-card-body class="card-body">
-            <p>🚀 Sign into your account</p>
-            <b-form>
-              <b-form-group class="form-group">
-                <label for="fullname" class="sr-only">Fullname</label>
-                <b-input
-                  type="text"
-                  id="fullname"
-                  placeholder="Fullname"
-                />
-              </b-form-group>
-              <b-form-group class="form-group">
-                <label for="email" class="sr-only">Email</label>
-                <b-input
-                  type="email"
-                  id="email"
-                  placeholder="Email address"
-                />
-              </b-form-group>
-              <b-form-group class="form-group mb-4">
-                <label for="password" class="sr-only">Password</label>
-                <b-input
-                  type="password"
-                  id="password"
-                  placeholder="***********"
-                />
-              </b-form-group>
-              <b-button class="btn btn-block mb-4">Login</b-button>
-            </b-form>
-            <b-link to="/forget" class="text-primary login__link">Forgot password?</b-link>
-            <b-card-text>
-              Already a member?
-              <b-link to="/login" class="text-primary login__link">SignIn here</b-link> 
-              Or
-              <b-link to="/signup" class="text-primary login__link">Demo 👈</b-link>
-            </b-card-text>
-          </b-card-body>
-        </b-card>
-      </b-col>
-    </b-row>
-  </b-contianer>
+  <b-row class="m-0">
+    <b-col cols lg="5" md="7" sm="8" class="ml-auto mr-auto">
+      <b-card class="register__card shadow-lg rounded border-0">
+        <b-card-body class="card-body">
+          <p>🚀 Sign into your account</p>
+          <b-form @submit.prevent="onSubmit">
+            <b-form-group class="form-group">
+              <label for="fullname" class="sr-only">Fullname</label>
+              <b-input
+                type="text"
+                id="fullname"
+                placeholder="Fullname"
+                v-model="form.fullname"
+                required
+              />
+            </b-form-group>
+            <b-form-group class="form-group">
+              <label for="email" class="sr-only">Email</label>
+              <b-input
+                type="email"
+                id="email"
+                placeholder="Email address"
+                v-model="form.email"
+                required
+              />
+            </b-form-group>
+            <b-form-group class="form-group mb-4">
+              <label for="password" class="sr-only">Password</label>
+              <b-input
+                type="password"
+                id="password"
+                placeholder="***********"
+                v-model="form.password"
+                required
+              />
+            </b-form-group>
+            <b-button
+              type="submit"
+              class="btn btn-block mb-4"
+              :disabled="!validated"
+              >{{requesting ? 'Signing...' : 'Sign Up'}}</b-button
+            >
+          </b-form>
+          <b-link to="/forget" class="text-primary register__link"
+            >Forgot password?</b-link
+          >
+          <b-card-text>
+            Already a member?
+            <b-link to="/login" class="text-primary register__link"
+              >SignIn here</b-link
+            >
+            Or
+            <b-link to="/signup" class="text-primary register__link"
+              >Demo 👈</b-link
+            >
+          </b-card-text>
+        </b-card-body>
+      </b-card>
+    </b-col>
+  </b-row>
 </template>
 
 <script>
-export default {};
+import firebase from "firebase";
+export default {
+  name: "registration",
+  data() {
+    return {
+      form: {
+        fullname: "",
+        email: "",
+        password: "",
+      },
+      requesting: false,
+    };
+  },
+  methods: {
+    onSubmit() {
+      this.requesting = true;
+      firebase
+        .auth()
+        .createUserWithEmailAndPassword(this.form.email, this.form.password)
+        .then((res) => {
+          return res.user.updateProfile({
+            displayName: this.form.fullname,
+          });
+        })
+        .then(() => this.$router.push({name: 'login'}))
+        .catch((error) => console.log(error))
+        .finally(() => this.requesting = false)
+    },
+  },
+  computed: {
+    validated() {
+      return (
+        this.form.fullname.length >= 6 &&
+        this.form.email.length >= 8 &&
+        this.form.password.length >= 6
+      );
+    },
+  },
+};
 </script>
 
 <style scoped>
-.login__card {
+.register__card {
   margin-top: 70px;
 }
 
-.login__card img {
+.register__card img {
   width: 300px;
 }
 
-.login__link {
-    cursor: pointer;
+.register__link {
+  cursor: pointer;
 }
 </style>
