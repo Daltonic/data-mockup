@@ -21,6 +21,11 @@ const routes = [
     name: 'signup',
   },
   {
+    path: '/forget',
+    component: () => import(/* webpackChunkName: "Forget" */ './views/Forget.vue'),
+    name: 'forget',
+  },
+  {
     path: '/mockups',
     component: () => import(/* webpackChunkName: "Mockup" */ './views/MockUps.vue'),
     name: 'mockups',
