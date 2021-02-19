@@ -15,17 +15,42 @@
         </b-link>
       </b-col>
 
-      <b-col v-for="project in projects" :key="project.key" cols lg="4" md="6" xs="12">
+      <b-col
+        v-for="project in projects"
+        :key="project.key"
+        cols
+        lg="4"
+        md="6"
+        xs="12"
+      >
         <div class="project__link text-dark">
           <b-card class="project__card shadow-lg p-3 mb-5 rounded border-0">
             <b-card-body>
               <b-link :to="'/projects/' + project.key">
-                <b-card-text class="project__text">{{project.title}}</b-card-text>
+                <b-card-text class="project__text">{{
+                  project.title
+                }}</b-card-text>
               </b-link>
-              <small class="text-captalize text-muted">Created By: <em>{{project.creator}}</em></small>
-              <br>
-              <b-button :to="'/projects/edit/' + project.key" size="sm" variant="dark" class="mt-3">Edit Record</b-button>
-              <b-button @click="remRow(project)" size="sm" variant="danger" class="ml-2 mt-3">Delete</b-button>
+              <small class="text-captalize text-muted"
+                >Created By: <em>{{ project.creator }}</em></small
+              >
+              <br />
+              <template v-if="currentUser.uid == project.uid">
+                <b-button
+                  :to="'/projects/edit/' + project.key"
+                  size="sm"
+                  variant="dark"
+                  class="mt-3"
+                  >Edit Record</b-button
+                >
+                <b-button
+                  @click="remRow(project)"
+                  size="sm"
+                  variant="danger"
+                  class="ml-2 mt-3"
+                  >Delete</b-button
+                >
+              </template>
             </b-card-body>
           </b-card>
         </div>
@@ -39,11 +64,11 @@ import firebase from "firebase";
 export default {
   data() {
     return {
-      projects: []
-    }
+      projects: [],
+    };
   },
   created() {
-    this.getProjects()
+    this.getProjects();
   },
   methods: {
     getProjects() {
@@ -53,7 +78,7 @@ export default {
         snapshot.forEach((childSnapshot) => {
           const key = childSnapshot.key;
           const data = childSnapshot.val();
-          projects.push({...data, key});
+          projects.push({ ...data, key });
         });
         this.projects = projects;
       });
@@ -64,11 +89,16 @@ export default {
         .child(project.key)
         .remove()
         .then(() => {
-          const index = this.projects.indexOf(project)
-          this.projects.splice(index, 1)
-        })
+          const index = this.projects.indexOf(project);
+          this.projects.splice(index, 1);
+        });
     },
-  }
+  },
+  computed: {
+    currentUser() {
+      return firebase.auth()?.currentUser || false;
+    },
+  },
 };
 </script>
 
@@ -96,6 +126,5 @@ export default {
 
 .project__link {
   text-decoration: none;
-
 }
 </style>
