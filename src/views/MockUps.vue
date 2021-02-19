@@ -66,14 +66,16 @@
           class="mb-0"
         >
           <b-input-group size="sm">
-              <b-input-group-prepend>
-              <b-button variant="danger" v-b-modal.add-row-modal>Add Mockup</b-button>
+            <b-input-group-prepend>
+              <b-button variant="danger" v-b-modal.add-row-modal
+                >Add Mockup</b-button
+              >
             </b-input-group-prepend>
             <b-form-input
               id="filter-input"
               v-model="filter"
-              type="search"
-              placeholder="Type to Search"
+              row="search"
+              placeholder="row to Search"
             ></b-form-input>
 
             <b-input-group-append>
@@ -101,8 +103,8 @@
             :aria-describedby="ariaDescribedby"
             class="mt-1"
           >
-            <b-form-checkbox value="type">type</b-form-checkbox>
-            <b-form-checkbox value="tag">Tags</b-form-checkbox>
+            <b-form-checkbox value="row">row</b-form-checkbox>
+            <b-form-checkbox value="tag">col</b-form-checkbox>
           </b-form-checkbox-group>
         </b-form-group>
       </b-col>
@@ -156,17 +158,12 @@
       :busy="loading"
       @filtered="onFiltered"
     >
-      <template #cell(type)="row">
+      <template #cell(row)="row">
         {{ row.value }}
       </template>
 
-      <template #cell(tags)="row">
-        <b-tag
-          v-for="tag in row.value"
-          :key="tag"
-          class="text-capitalize"
-          >{{ tag }}</b-tag
-        >
+      <template #cell(col)="col">
+        {{ col.value }}
       </template>
 
       <template #table-busy>
@@ -184,16 +181,12 @@
       </template>
 
       <template #cell(actions)="row">
-        <b-button
-          size="sm"
-          @click="editRow(row.item, row.index, $event.target)"
-          class="mr-1"
-        >
+        <b-button size="sm" @click="editRow(row.item)" class="mr-1">
           Edit
         </b-button>
         <b-button
           size="sm"
-          @click="remRow(row.index, $event.target)"
+          @click="remRow(row.item)"
           class="mr-1"
           variant="danger"
         >
@@ -208,17 +201,16 @@
           <b-col cols md="12" class="my-3">
             <b-form-input
               required
-              v-model.trim="item.type"
+              v-model.trim="item.col"
               placeholder="Column Name"
             ></b-form-input>
           </b-col>
           <b-col cols md="12" class="my-3">
-              <b-form-tags
+            <b-form-input
               required
-              v-model="item.tags"
-              placeholder="Field Tags"
-              max="5"
-            ></b-form-tags>
+              v-model.trim="item.row"
+              placeholder="Row Name"
+            ></b-form-input>
           </b-col>
         </b-row>
       </b-container>
@@ -228,23 +220,22 @@
         <b-button variant="success" @click="addRow()"> Add Row </b-button>
       </template>
     </b-modal>
-    <b-modal id="edit-row-modal" centered title="Update Row Data">
+    <b-modal id="edit-row-modal" centered title="Update Mockup">
       <b-container fluid>
         <b-row>
           <b-col cols md="12" class="my-3">
             <b-form-input
               required
-              v-model.trim="item.type"
-              placeholder="Data Type"
+              v-model.trim="item.col"
+              placeholder="Column Name"
             ></b-form-input>
           </b-col>
           <b-col cols md="12" class="my-3">
-              <b-form-tags
+            <b-form-input
               required
-              v-model="item.tags"
-              placeholder="field tags"
-              max="5"
-            ></b-form-tags>
+              v-model.trim="item.row"
+              placeholder="Row Name"
+            ></b-form-input>
           </b-col>
         </b-row>
       </b-container>
@@ -260,20 +251,21 @@
 </template>
 
 <script>
+import firebase from "firebase";
 export default {
   data() {
     return {
       loading: false,
-      item: {tags: [], type: "", index: ''},
+      item: { col: "", row: "", key: "" },
       items: [],
       fields: [
         {
-          key: "type",
-          label: "Data Type",
+          key: "col",
+          label: "Column",
           sortable: true,
           sortDirection: "desc",
         },
-        { key: "tags", label: "Tags", sortable: true, class: "text-center" },
+        { key: "row", label: "Row", sortable: true, class: "text-center" },
         { key: "actions", label: "Actions" },
       ],
       totalRows: 1,
@@ -298,7 +290,7 @@ export default {
     },
   },
   mounted() {
-    // Set the initial number of items
+    this.getRows();
     this.totalRows = this.items.length;
   },
   methods: {
@@ -307,27 +299,56 @@ export default {
       this.totalRows = filteredItems.length;
       this.currentPage = 1;
     },
+    getRows() {
+      const mockupsRef = firebase.database().ref("/mockups");
+      const items = [];
+      this.loading = true;
+      mockupsRef.once("value", (snapshot) => {
+        snapshot.forEach((childSnapshot) => {
+          const data = childSnapshot.val();
+          items.push(data);
+        });
+        this.items = items;
+        this.loading = false;
+      });
+    },
     addRow() {
-      this.items.unshift({ ...this.item });
-      this.onReset();
-      this.$bvModal.hide("add-row-modal");
+      const mockupsRef = firebase.database().ref("/mockups");
+      mockupsRef.push(this.item).then((data) => {
+        this.item.key = data.key;
+        this.items.push({ ...this.item });
+        this.$bvModal.hide("add-row-modal");
+        this.onReset();
+      });
     },
-    remRow(index) {
-      this.items.splice(index, 1);
+    remRow(item) {
+      const mockupsRef = firebase.database().ref("/mockups");
+      mockupsRef
+        .child(item.key)
+        .remove()
+        .then(() => {
+          const index = this.items.indexOf(item)
+          this.items.splice(index, 1)
+        })
     },
-    editRow(item, index) {
-      item.index = index;
+    editRow(item) {
       this.item = item;
       this.$bvModal.show("edit-row-modal");
     },
     updateRow(item) {
-      this.item[item.index] = item;
-      this.$bvModal.hide("edit-row-modal");
+      const mockupsRef = firebase.database().ref("/mockups");
+      mockupsRef
+        .child(item.key)
+        .set(item)
+        .then(() => {
+          this.item[item.key] = item;
+          this.$bvModal.hide("edit-row-modal");
+        });
     },
     onReset() {
-      this.item.type = "";
-      this.item.tags = [];
-      this.item.index = "";
+      this.item.row = "";
+      this.item.col = "";
+      this.item.key = "";
     },
   },
 };
