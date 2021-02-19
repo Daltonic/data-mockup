@@ -32,9 +32,22 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/projects/create',
+    component: () => import(/* webpackChunkName: "ProjectsCreate" */ './views/ProjectsCreate.vue'),
+    name: 'projectsCreate',
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/projects/:id',
     component: () => import(/* webpackChunkName: "Project" */ './views/Project.vue'),
     name: 'project',
+    props: true
+  },
+  {
+    path: '/projects/edit/:id',
+    component: () => import(/* webpackChunkName: "ProjectsEdit" */ './views/ProjectsEdit.vue'),
+    name: 'projectsEdit',
+    props: true,
     meta: { requiresAuth: true }
   },
 ]
