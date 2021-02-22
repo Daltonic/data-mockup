@@ -21,7 +21,7 @@
             placeholder="Rows e.g 100"
             type="number"
             min="1"
-            v-model.trim="table.size"
+            v-model.trim="table._repeat"
             required
           ></b-form-input>
           <b-input-group-prepend>
@@ -57,14 +57,14 @@
           <template #cell(actions)="row">
             <b-button
               size="sm"
-              @click="editRow(row.item, row.index, $event.target)"
+              @click="editRow(row.item, row.index)"
               class="mr-1"
             >
               Edit
             </b-button>
             <b-button
               size="sm"
-              @click="remRow(row.index, $event.target)"
+              @click="remRow(row.index)"
               class="mr-1"
               variant="danger"
             >
@@ -75,88 +75,140 @@
       </b-col>
     </b-row>
 
-    <b-modal id="add-row-modal" centered title="Add New Row">
-      <b-container fluid>
-        <b-row class="mb-1 text-center">
-          <b-col>Fields</b-col>
-          <b-col>Type</b-col>
-        </b-row>
-
+    <b-modal
+      id="add-row-modal"
+      hide-footer
+      no-close-on-backdrop
+      centered
+      title="Add New Row"
+    >
+      <b-form @submit.prevent="onSubmit" class="container-fluid">
         <b-row>
           <b-col>
             <b-form-input
               required
-              v-model.trim="item.field_name"
-              placeholder="field name"
+              v-model.trim="item.col"
+              placeholder="Column Name"
             ></b-form-input>
           </b-col>
           <b-col>
-            <b-form-select
+            <b-form-input
               required
-              v-model.trim="item.type"
-              :options="variants"
-            ></b-form-select>
+              v-model.trim="keyword"
+              placeholder="Row Name"
+            ></b-form-input>
           </b-col>
         </b-row>
-      </b-container>
 
-      <template #modal-footer="{ cancel }">
-        <b-button @click="cancel()"> Cancel </b-button>
-        <b-button variant="success" @click="addRow()"> Add Row </b-button>
-      </template>
+        <b-row>
+          <b-col cols md="12" class="my-2">
+            <b-tag
+              v-for="tag in results"
+              :key="tag.key"
+              style="cursor: pointer"
+            >
+              <span @click="onSelect(tag)">{{ tag.row }}</span></b-tag
+            >
+          </b-col>
+        </b-row>
+        <hr>
+        <b-row>
+          <b-col>
+            <b-button
+              size="sm"
+              type="button"
+              variant="secondary"
+              class="mr-1"
+              @click="$bvModal.hide('add-row-modal')"
+              >Cancel</b-button
+            >
+            <b-button size="sm" type="submit" variant="danger"
+              >Add Row</b-button
+            >
+          </b-col>
+        </b-row>
+      </b-form>
     </b-modal>
-    <b-modal id="edit-row-modal" centered title="Update Row Data">
-      <b-container fluid>
-        <b-row class="mb-1 text-center">
-          <b-col>Fields</b-col>
-          <b-col>Type</b-col>
-        </b-row>
 
+    <b-modal
+      id="edit-row-modal"
+      hide-footer
+      no-close-on-backdrop
+      centered
+      title="Update Row Data"
+    >
+      <b-form @submit.prevent="onUpdate" class="container-fluid">
         <b-row>
           <b-col>
             <b-form-input
               required
-              v-model.trim="item.field_name"
-              placeholder="field name"
+              v-model.trim="item.col"
+              placeholder="Column Name"
             ></b-form-input>
           </b-col>
           <b-col>
-            <b-form-select
+            <b-form-input
               required
-              v-model.trim="item.type"
-              :options="variants"
-            ></b-form-select>
+              v-model.trim="keyword"
+              placeholder="Row Name"
+            ></b-form-input>
           </b-col>
         </b-row>
-      </b-container>
 
-      <template #modal-footer="{ cancel }">
-        <b-button @click="cancel()"> Cancel </b-button>
-        <b-button variant="success" @click="updateRow(item)">
-          Update Row
-        </b-button>
-      </template>
+        <b-row>
+          <b-col cols md="12" class="my-2">
+            <b-tag
+              v-for="tag in results"
+              :key="tag.key"
+              style="cursor: pointer"
+            >
+              <span @click="onSelect(tag)">{{ tag.row }}</span></b-tag
+            >
+          </b-col>
+        </b-row>
+        <hr>
+        <b-row>
+          <b-col>
+            <b-button
+              size="sm"
+              type="button"
+              variant="secondary"
+              class="mr-1"
+              @click="$bvModal.hide('edit-row-modal')"
+              >Cancel</b-button
+            >
+            <b-button size="sm" type="submit" variant="danger"
+              >Update Row</b-button
+            >
+          </b-col>
+        </b-row>
+      </b-form>
     </b-modal>
   </b-container>
 </template>
 
 <script>
+import firebase from "firebase";
 export default {
   props: {
-    id: {type: String, required: true}
+    id: { type: String, required: true },
   },
   data() {
     return {
-      table: { name: "", size: "" },
+      table: { name: "", _repeat: "" },
       generating: false,
-      item: { field_name: "", type: "", index: "" },
+      keyword: "",
+      name: "",
+      item: { col: "", row: "", key: "" },
       fields: [
         {
-          key: "field_name",
+          key: "col",
+          label: "Column",
           sortable: true,
         },
         {
-          key: "type",
+          key: "row",
+          label: "Row Data",
           sortable: true,
         },
         {
@@ -165,37 +217,65 @@ export default {
         },
       ],
       items: [],
-      variants: [
-        { value: "", text: "Select Type" },
-        { value: "p", text: "primary" },
-        { value: "s", text: "secondary" },
-        { value: "i", text: "info" },
-        { value: "d", text: "danger" },
-      ],
+      mockups: [],
+      results: [],
     };
   },
+  created() {
+    this.getMockups();
+  },
   methods: {
-    addRow() {
+    onSubmit() {
       this.items.push({ ...this.item });
       this.onReset();
       this.$bvModal.hide("add-row-modal");
     },
-    remRow(index) {
-      this.items.splice(index, 1);
+    remRow(key) {
+      this.items.splice(key, 1);
     },
     onReset() {
-      this.item.field_name = "";
-      this.item.type = "";
-      this.item.index = "";
+      this.item.col = "";
+      this.item.row = "";
+      this.item.key = "";
+      this.name = "";
+      this.keyword = "";
+      this.results = [];
     },
-    editRow(item, index) {
-      item.index = index;
-      this.item = item;
+    editRow(item, key) {
+      item.key = key;
+      this.item = {...item};
+      this.keyword = this.item.row;
       this.$bvModal.show("edit-row-modal");
     },
-    updateRow(item) {
-      this.item[item.index] = item;
+    onUpdate() {
+      this.items[this.item.key] = {...this.item};
+      this.items = [...this.items]
+      this.onReset()
       this.$bvModal.hide("edit-row-modal");
+    },
+    getMockups() {
+      const mockupsRef = firebase.database().ref("/mockups");
+      const mockups = [];
+      mockupsRef.once("value", (snapshot) => {
+        snapshot.forEach((childSnapshot) => {
+          const key = childSnapshot.key;
+          const data = childSnapshot.val();
+          mockups.push({ ...data, key });
+        });
+        this.mockups = mockups;
+      });
+    },
+    onSelect(item) {
+      this.item.row = item.row;
+      this.name = "";
+      this.keyword = item.row;
+      this.results = [];
+    },
+  },
+  watch: {
+    keyword() {
+      if (this.keyword != "")
+        this.results = this.mockups.filter((m) => m.row.includes(this.keyword));
     },
   },
   computed: {
