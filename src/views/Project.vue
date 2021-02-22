@@ -57,14 +57,14 @@
           <template #cell(actions)="row">
             <b-button
               size="sm"
-              @click="editRow(row.item, row.index)"
+              @click="editRow(row.item)"
               class="mr-1"
             >
               Edit
             </b-button>
             <b-button
               size="sm"
-              @click="remRow(row.index)"
+              @click="remRow(row.item)"
               class="mr-1"
               variant="danger"
             >
@@ -111,7 +111,7 @@
             >
           </b-col>
         </b-row>
-        <hr>
+        <hr />
         <b-row>
           <b-col>
             <b-button
@@ -122,7 +122,11 @@
               @click="$bvModal.hide('add-row-modal')"
               >Cancel</b-button
             >
-            <b-button size="sm" type="submit" variant="danger"
+            <b-button
+              :disabled="requesting || !valid"
+              size="sm"
+              type="submit"
+              variant="danger"
               >Add Row</b-button
             >
           </b-col>
@@ -166,7 +170,7 @@
             >
           </b-col>
         </b-row>
-        <hr>
+        <hr />
         <b-row>
           <b-col>
             <b-button
@@ -177,7 +181,11 @@
               @click="$bvModal.hide('edit-row-modal')"
               >Cancel</b-button
             >
-            <b-button size="sm" type="submit" variant="danger"
+            <b-button
+              :disabled="requesting || !valid"
+              size="sm"
+              type="submit"
+              variant="danger"
               >Update Row</b-button
             >
           </b-col>
@@ -197,6 +205,7 @@ export default {
     return {
       table: { name: "", _repeat: "" },
       generating: false,
+      requesting: false,
       keyword: "",
       name: "",
       item: { col: "", row: "", key: "" },
@@ -223,15 +232,31 @@ export default {
   },
   created() {
     this.getMockups();
+    this.getMocks();
   },
   methods: {
     onSubmit() {
-      this.items.push({ ...this.item });
-      this.onReset();
-      this.$bvModal.hide("add-row-modal");
+      this.requesting = true;
+      const mocksRef = firebase.database().ref(`/mocks/${this.id}`);
+      mocksRef.push(this.item).then((data) => {
+        this.item.key = data.key
+        this.items.push({ ...this.item });
+        this.onReset();
+        this.$bvModal.hide("add-row-modal");
+        this.requesting = false;
+      });
     },
-    remRow(key) {
-      this.items.splice(key, 1);
+    remRow(item) {
+      this.requesting = true;
+      const mocksRef = firebase.database().ref(`/mocks/${this.id}`);
+      mocksRef
+        .child(item.key)
+        .remove()
+        .then(() => {
+          const index = this.items.findIndex(i => i.key == item.key);
+          this.items.splice(index, 1)
+          this.requesting = false;
+        });
     },
     onReset() {
       this.item.col = "";
@@ -241,17 +266,25 @@ export default {
       this.keyword = "";
       this.results = [];
     },
-    editRow(item, key) {
-      item.key = key;
-      this.item = {...item};
+    editRow(item) {
+      this.item = { ...item };
       this.keyword = this.item.row;
       this.$bvModal.show("edit-row-modal");
     },
     onUpdate() {
-      this.items[this.item.key] = {...this.item};
-      this.items = [...this.items]
-      this.onReset()
-      this.$bvModal.hide("edit-row-modal");
+      this.requesting = true;
+      const mocksRef = firebase.database().ref(`/mocks/${this.id}`);
+      mocksRef
+        .child(this.item.key)
+        .set(this.item)
+        .then(() => {
+          const index = this.items.findIndex(i => i.key == this.item.key)
+          this.items[index] = { ...this.item };
+          this.items = [...this.items];
+          this.onReset();
+          this.$bvModal.hide("edit-row-modal");
+          this.requesting = false
+        });
     },
     getMockups() {
       const mockupsRef = firebase.database().ref("/mockups");
@@ -263,6 +296,20 @@ export default {
           mockups.push({ ...data, key });
         });
         this.mockups = mockups;
+      });
+    },
+    getMocks() {
+      this.generating = true;
+      const mocksRef = firebase.database().ref(`/mocks/${this.id}`);
+      const mocks = [];
+      mocksRef.once("value", (snapshot) => {
+        snapshot.forEach((childSnapshot) => {
+          const key = childSnapshot.key;
+          const data = childSnapshot.val();
+          mocks.push({ ...data, key });
+        });
+        this.items = mocks;
+        this.generating = false;
       });
     },
     onSelect(item) {
@@ -280,8 +327,11 @@ export default {
   },
   computed: {
     validated() {
-      return this.table.name.length >= 3 && this.table.size.length >= 1;
+      return this.table.name.length >= 3 && this.table._repeat.length >= 1;
     },
+    valid() {
+      return this.item.col.length > 0 && this.item.row.length >= 3;
+    }
   },
 };
 </script>
