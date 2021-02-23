@@ -33,7 +33,7 @@
           </b-form>
           <b-card-text>
             Changed your mind?
-            <b-link to="/projects" class="text-primary projects__create__link"
+            <b-link to="/" class="text-primary projects__create__link"
               >Back To Home 👈</b-link
             >
           </b-card-text>

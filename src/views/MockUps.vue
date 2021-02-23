@@ -1,6 +1,5 @@
 <template>
   <b-container>
-    <!-- User Interface controls -->
     <b-row class="mt-5">
       <b-col lg="6" class="my-1">
         <b-form-group
@@ -195,57 +194,102 @@
       </template>
     </b-table>
 
-    <b-modal id="add-row-modal" centered title="Add New Row">
-      <b-container fluid>
-        <b-row>
-          <b-col cols md="12" class="my-3">
-            <b-form-input
-              required
-              v-model.trim="item.col"
-              placeholder="Column Name"
-            ></b-form-input>
-          </b-col>
-          <b-col cols md="12" class="my-3">
-            <b-form-input
-              required
-              v-model.trim="item.row"
-              placeholder="Row Name"
-            ></b-form-input>
-          </b-col>
-        </b-row>
-      </b-container>
-
-      <template #modal-footer="{ cancel }">
-        <b-button @click="cancel()"> Cancel </b-button>
-        <b-button variant="success" @click="addRow()"> Add Row </b-button>
-      </template>
+    <b-modal
+      id="add-row-modal"
+      hide-footer
+      no-close-on-backdrop
+      centered
+      title="Add Mockup"
+    >
+      <b-overlay :show="requesting" rounded="sm">
+        <b-form @submit.prevent="onSubmit" class="container-fluid">
+          <b-row>
+            <b-col>
+              <b-form-input
+                required
+                v-model.trim="item.col"
+                placeholder="Column Name"
+              ></b-form-input>
+            </b-col>
+            <b-col>
+              <b-form-input
+                required
+                v-model.trim="item.row"
+                placeholder="Row Name"
+              ></b-form-input>
+            </b-col>
+          </b-row>
+          <hr />
+          <b-row>
+            <b-col>
+              <b-button
+                size="sm"
+                type="button"
+                variant="secondary"
+                class="mr-1"
+                @click="$bvModal.hide('add-row-modal')"
+                >Cancel</b-button
+              >
+              <b-button
+                :disabled="requesting || !valid"
+                size="sm"
+                type="submit"
+                variant="danger"
+                >Add Row</b-button
+              >
+            </b-col>
+          </b-row>
+        </b-form>
+      </b-overlay>
     </b-modal>
-    <b-modal id="edit-row-modal" centered title="Update Mockup">
-      <b-container fluid>
-        <b-row>
-          <b-col cols md="12" class="my-3">
-            <b-form-input
-              required
-              v-model.trim="item.col"
-              placeholder="Column Name"
-            ></b-form-input>
-          </b-col>
-          <b-col cols md="12" class="my-3">
-            <b-form-input
-              required
-              v-model.trim="item.row"
-              placeholder="Row Name"
-            ></b-form-input>
-          </b-col>
-        </b-row>
-      </b-container>
 
-      <template #modal-footer="{ cancel }">
-        <b-button @click="cancel()"> Cancel </b-button>
-        <b-button variant="success" @click="updateRow(item)">
-          Update Row
-        </b-button>
-      </template>
+    <b-modal
+      id="edit-row-modal"
+      hide-footer
+      no-close-on-backdrop
+      centered
+      title="Update Mockup"
+    >
+      <b-overlay :show="requesting" rounded="sm">
+        <b-form @submit.prevent="onUpdate" class="container-fluid">
+          <b-row>
+            <b-col>
+              <b-form-input
+                required
+                v-model.trim="item.col"
+                placeholder="Column Name"
+              ></b-form-input>
+            </b-col>
+            <b-col>
+              <b-form-input
+                required
+                v-model.trim="item.row"
+                placeholder="Row Name"
+              ></b-form-input>
+            </b-col>
+          </b-row>
+          <hr />
+          <b-row>
+            <b-col>
+              <b-button
+                size="sm"
+                type="button"
+                variant="secondary"
+                class="mr-1"
+                @click="$bvModal.hide('edit-row-modal')"
+                >Cancel</b-button
+              >
+              <b-button
+                :disabled="requesting || !valid"
+                size="sm"
+                type="submit"
+                variant="danger"
+                >Update Row</b-button
+              >
+            </b-col>
+          </b-row>
+        </b-form>
+      </b-overlay>
     </b-modal>
   </b-container>
 </template>
@@ -256,6 +300,7 @@ export default {
   data() {
     return {
       loading: false,
+      requesting: false,
       item: { col: "", row: "", key: "" },
       items: [],
       fields: [
@@ -279,19 +324,8 @@ export default {
       filterOn: [],
     };
   },
-  computed: {
-    sortOptions() {
-      // Create an options list from our fields
-      return this.fields
-        .filter((f) => f.sortable)
-        .map((f) => {
-          return { text: f.label, value: f.key };
-        });
-    },
-  },
-  mounted() {
+  created() {
     this.getRows();
-    this.totalRows = this.items.length;
   },
   methods: {
     onFiltered(filteredItems) {
@@ -305,20 +339,24 @@ export default {
       this.loading = true;
       mockupsRef.once("value", (snapshot) => {
         snapshot.forEach((childSnapshot) => {
+          const key = childSnapshot.key;
           const data = childSnapshot.val();
-          items.push(data);
+          items.push({ ...data, key });
         });
         this.items = items;
+        this.totalRows = this.items.length;
         this.loading = false;
       });
     },
-    addRow() {
+    onSubmit() {
+      this.requesting = true;
       const mockupsRef = firebase.database().ref("/mockups");
       mockupsRef.push(this.item).then((data) => {
         this.item.key = data.key;
         this.items.push({ ...this.item });
-        this.$bvModal.hide("add-row-modal");
         this.onReset();
+        this.$bvModal.hide("add-row-modal");
+        this.requesting = false;
       });
     },
     remRow(item) {
@@ -327,28 +365,46 @@ export default {
         .child(item.key)
         .remove()
         .then(() => {
-          const index = this.items.indexOf(item)
-          this.items.splice(index, 1)
-        })
+          const index = this.items.findIndex((i) => i.key == item.key);
+          this.items.splice(index, 1);
+        });
     },
     editRow(item) {
-      this.item = item;
+      this.item = { ...item };
       this.$bvModal.show("edit-row-modal");
     },
-    updateRow(item) {
+    onUpdate() {
+      this.requesting = true;
       const mockupsRef = firebase.database().ref("/mockups");
       mockupsRef
-        .child(item.key)
-        .set(item)
+        .child(this.item.key)
+        .set(this.item)
         .then(() => {
-          this.item[item.key] = item;
+          const index = this.items.findIndex((i) => i.key == this.item.key);
+          this.items[index] = { ...this.item };
+          this.items = [...this.items];
+          this.onReset();
           this.$bvModal.hide("edit-row-modal");
+          this.requesting = false;
         });
     },
     onReset() {
       this.item.row = "";
       this.item.col = "";
       this.item.key = "";
+    },
+  },
+  computed: {
+    valid() {
+      return this.item.col.length > 0 && this.item.row.length >= 3;
+    },
+    sortOptions() {
+      // Create an options list from our fields
+      return this.fields
+        .filter((f) => f.sortable)
+        .map((f) => {
+          return { text: f.label, value: f.key };
+        });
     },
   },
 };
