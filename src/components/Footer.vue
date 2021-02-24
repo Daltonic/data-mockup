@@ -4,7 +4,7 @@
     ©2021 Data Mockup. <br>
     <small>
         Made With ❤️ by
-        <a href="https://github.com/Daltonic">Daltonic 🔥</a>
+        <a target="_blank" href="https://github.com/Daltonic">Daltonic 🔥</a>
     </small>
   </b-container>
 </template>

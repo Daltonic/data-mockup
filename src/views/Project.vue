@@ -30,13 +30,13 @@
               variant="success"
               text="Generate Data"
             >
-              <b-dropdown-item @click="onGenerateData('JSON')"
+              <b-dropdown-item @click="onGenerateData('json')"
                 >JSON</b-dropdown-item
               >
-              <b-dropdown-item @click="onGenerateData('SQL')"
+              <b-dropdown-item @click="onGenerateData('sql')"
                 >SQL</b-dropdown-item
               >
-              <b-dropdown-item @click="onGenerateData('CSV')"
+              <b-dropdown-item @click="onGenerateData('csv')"
                 >CSV</b-dropdown-item
               >
             </b-dropdown>
@@ -85,20 +85,48 @@
 
     <b-row v-if="data.length > 0" class="mt-5">
       <b-col class="bg-light rounded p-3">
-        <pre v-if="table.type == 'JSON'" class="overflow-auto project__result">
-          <span v-for="item in data" :key="item.email">{{item}} <br/></span>
-        </pre>
+        <pre
+          ref="data"
+          v-if="table.type == 'json'"
+          class="overflow-auto project__result"
+          >{{ data }}</pre
+        >
 
         <pre
-          v-else-if="table.type == 'SQL'"
+          ref="data"
+          v-else-if="table.type == 'sql'"
           class="overflow-auto project__result"
+          >{{ data }}</pre
         >
-          <span v-for="item in data" :key="item.email">{{toSQL(item)}} <br/></span>
-        </pre>
 
-        <pre v-else class="overflow-auto project__result">
-          <span v-for="item in data" :key="item.email">{{toCSV(item)}} <br/></span>
-        </pre>
+        <pre ref="data" v-else class="overflow-auto project__result">{{
+          data
+        }}</pre>
+      </b-col>
+
+      <b-col md="12">
+        <b-button-toolbar key-nav aria-label="Actions">
+          <b-button-group size="sm" class="mx-1">
+            <b-button @click="onCopy()" variant="primary">Copy</b-button>
+          </b-button-group>
+          <b-button-group size="sm" class="mx-1">
+            <b-button @click="onChangeType('json')">JSON</b-button>
+            <b-button @click="onChangeType('csv')">CSV</b-button>
+            <b-button @click="onChangeType('sql')">SQL</b-button>
+          </b-button-group>
+          <b-button-group size="sm" class="mx-1">
+            <b-button
+              @click="
+                downloadFile(
+                  table.type == 'json' ? JSON.stringify(data) : data,
+                  `${table.name}.${table.type}`
+                )
+              "
+              variant="success"
+              >Download</b-button
+            >
+          </b-button-group>
+        </b-button-toolbar>
       </b-col>
     </b-row>
 
@@ -229,14 +257,14 @@
 <script>
 import firebase from "firebase";
 import axios from "axios";
-import TOKEN from '../config'
+import TOKEN from "../config";
 export default {
   props: {
     id: { type: String, required: true },
   },
   data() {
     return {
-      table: { name: "", repeat: "", type: "CSV" },
+      table: { name: "", repeat: "", type: "json" },
       generating: false,
       requesting: false,
       keyword: "",
@@ -262,6 +290,9 @@ export default {
       mockups: [],
       results: [],
       data: [],
+      csv_data: [],
+      sql_data: [],
+      json_data: [],
     };
   },
   created() {
@@ -269,6 +300,34 @@ export default {
     this.getMocks();
   },
   methods: {
+    onChangeType(type) {
+      this.table.type = type;
+      if (this.table.type == "csv") {
+        this.data = this.csv_data.join("\n");
+      } else if (this.table.type == "sql") {
+        this.data = this.sql_data.join("\n");
+      } else {
+        this.data = this.json_data;
+      }
+    },
+    downloadFile(text, name) {
+      const a = document.createElement("a");
+      const type = name.split(".").pop();
+      a.href = URL.createObjectURL(
+        new Blob([text], { type: `text/${type === "txt" ? "plain" : type}` })
+      );
+      a.download = name;
+      a.click();
+    },
+    onCopy() {
+      const el = document.createElement("textarea");
+      el.value = this.$refs.data.textContent;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      console.log("coppied");
+    },
     toSQL(item) {
       return `INSERT INTO ${this.table.name} (${Object.keys(item).join(
         ", "
@@ -276,6 +335,11 @@ export default {
     },
     toCSV(item) {
       return `${Object.values(item).join(", ")}`;
+    },
+    iterator(arr, func) {
+      const result = [];
+      arr.filter((d) => result.push(func(d)));
+      return result;
     },
     onGenerateData(type) {
       this.generating = true;
@@ -286,13 +350,16 @@ export default {
 
       let payload = {
         token: TOKEN,
-        data: { ...data, _repeat: this.table.repeat },
+        data: { ...data, _repeat: Number(this.table.repeat) },
       };
 
       axios
         .post("https://app.fakejson.com/q", payload)
         .then((res) => {
           this.data = res.data;
+          this.json_data = res.data;
+          this.csv_data = this.iterator(res.data, this.toCSV);
+          this.sql_data = this.iterator(res.data, this.toSQL);
           this.table.type = type;
           this.generating = false;
         })
@@ -404,6 +471,6 @@ export default {
 <style scoped>
 .project__result {
   height: 250px;
-  display: inline-table;
+  display: grid;
 }
 </style>
