@@ -104,7 +104,7 @@
         }}</pre>
       </b-col>
 
-      <b-col md="12">
+      <b-col md="12" class="mt-3">
         <b-button-toolbar key-nav aria-label="Actions">
           <b-button-group size="sm" class="mx-1">
             <b-button @click="onCopy()" variant="primary">Copy</b-button>
