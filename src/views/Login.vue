@@ -41,7 +41,7 @@
               >Register here</b-link
             >
             Or
-            <b-link to="/signup" class="text-primary login__link"
+            <b-link @click="demoAcc()" class="text-primary login__link"
               >Demo 👈</b-link
             >
           </b-card-text>
@@ -65,6 +65,10 @@ export default {
     };
   },
   methods: {
+    demoAcc() {
+      this.form.email = 'johndoe@me.com'
+      this.form.password = '123456'
+    },
     onSubmit() {
       this.requesting = true;
       firebase

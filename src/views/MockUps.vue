@@ -1,5 +1,5 @@
 <template>
-  <b-container>
+  <b-container class="mt-6">
     <b-row class="mt-5">
       <b-col lg="6" class="my-1">
         <b-form-group

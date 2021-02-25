@@ -1,18 +1,18 @@
 <template>
-  <header>
-    <b-navbar variant="faded" type="light" class="header__shadow">
+  <header class="mb-5">
+    <b-navbar fixed="top" variant="faded" type="light" class="bg-white header__shadow">
       <b-navbar-brand to="/">🏆 Data MockUp</b-navbar-brand>
 
       <b-collapse id="nav-collapse" is-nav>
         <b-navbar-nav class="ml-auto">
           <template v-if="isLoggedIn">
-            <b-nav-item to="/mockups">Mockup</b-nav-item>
-            <b-nav-item @click="logout">Logout</b-nav-item>
+            <b-nav-item to="/mockups">🎁 Mockup</b-nav-item>
+            <b-nav-item @click="logout">🔐 Logout</b-nav-item>
           </template>
 
           <template v-else>
-            <b-nav-item to="/login">Login</b-nav-item>
-            <b-nav-item to="/signup">Sign Up</b-nav-item>
+            <b-nav-item to="/login">🔑 Login</b-nav-item>
+            <b-nav-item to="/signup">🔏 Sign Up</b-nav-item>
           </template>
         </b-navbar-nav>
       </b-collapse>

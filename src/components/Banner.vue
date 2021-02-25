@@ -7,8 +7,8 @@
         ><button class="banner__button">Sign Up</button>
       </div> -->
       <h1 class="banner__description">
-        Wealth, lust, and betrayal set in the backdrop of Regency era England,
-        seen through the eyes of the powerful Bridgerton family.
+        Generate mockup data for your projects on web development,
+        data science, and more with ease!
       </h1>
     </b-container>
     <div class="banner__fadeBottom"></div>

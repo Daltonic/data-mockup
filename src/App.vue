@@ -21,4 +21,7 @@ export default {
   #app {
     display: block;
   }
+  .mt-6 {
+    margin-top: 6rem;
+  }
 </style>

@@ -50,10 +50,6 @@
             <b-link to="/login" class="text-primary register__link"
               >SignIn here</b-link
             >
-            Or
-            <b-link to="/signup" class="text-primary register__link"
-              >Demo 👈</b-link
-            >
           </b-card-text>
         </b-card-body>
       </b-card>

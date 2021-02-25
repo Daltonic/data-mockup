@@ -1,5 +1,5 @@
 <template>
-  <b-container>
+  <b-container class="mt-6">
     <b-row class="mt-5">
       <b-col cols md="12" class="ml-auto mr-auto mb-4">
         <b-input-group class="mb-2">
@@ -31,13 +31,13 @@
               text="Generate Data"
             >
               <b-dropdown-item @click="onGenerateData('json')"
-                >JSON</b-dropdown-item
+                >📗 JSON</b-dropdown-item
               >
               <b-dropdown-item @click="onGenerateData('sql')"
-                >SQL</b-dropdown-item
+                >📘 SQL</b-dropdown-item
               >
               <b-dropdown-item @click="onGenerateData('csv')"
-                >CSV</b-dropdown-item
+                >📙 CSV</b-dropdown-item
               >
             </b-dropdown>
           </b-input-group-prepend>
@@ -55,7 +55,7 @@
           <template #table-busy>
             <div class="text-center text-danger my-2">
               <b-spinner class="align-middle"></b-spinner>
-              <strong> Generating...</strong>
+              <strong> ⚙️Generating...</strong>
             </div>
           </template>
 
@@ -66,7 +66,7 @@
             </h4>
           </template>
 
-          <template #cell(actions)="row">
+          <template v-if="currentUser.uid" #cell(actions)="row">
             <b-button size="sm" @click="editRow(row.item)" class="mr-1">
               Edit
             </b-button>
@@ -464,6 +464,9 @@ export default {
     },
     valid() {
       return this.item.col.length > 0 && this.item.row.length >= 3;
+    },
+    currentUser() {
+      return firebase.auth()?.currentUser || false;
     },
   },
 };

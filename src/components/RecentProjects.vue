@@ -1,7 +1,7 @@
 <template>
   <b-container id="recentProject">
     <h4 class="lead my-5">RECENT PROJECTS</h4>
-    <b-row>
+    <b-row v-if="!requesting">
       <b-col cols lg="4" md="6" xs="12">
         <b-link to="/projects/create" class="project__link text-dark">
           <b-card
@@ -14,7 +14,6 @@
           </b-card>
         </b-link>
       </b-col>
-
       <b-col
         v-for="project in projects"
         :key="project.key"
@@ -56,6 +55,22 @@
         </div>
       </b-col>
     </b-row>
+    <b-row v-else>
+      <b-col v-for="n in 5" :key="n" cols lg="4" md="6" xs="12">
+        <div class="project__link text-dark">
+          <b-card class="project__card shadow-lg p-3 mb-5 rounded border-0">
+            <b-card-body>
+              <b-skeleton animation="wave" width="55%"></b-skeleton>
+              <b-skeleton animation="wave" width="75%"></b-skeleton>
+              <div style="display: inline-flex">
+                <b-skeleton type="button" class="mr-1"></b-skeleton>
+                <b-skeleton type="button"></b-skeleton>
+              </div>
+            </b-card-body>
+          </b-card>
+        </div>
+      </b-col>
+    </b-row>
   </b-container>
 </template>
 
@@ -65,6 +80,7 @@ export default {
   data() {
     return {
       projects: [],
+      requesting: false,
     };
   },
   created() {
@@ -72,6 +88,7 @@ export default {
   },
   methods: {
     getProjects() {
+      this.requesting = true;
       const projectsRef = firebase.database().ref("/projects");
       const projects = [];
       projectsRef.once("value", (snapshot) => {
@@ -81,6 +98,7 @@ export default {
           projects.push({ ...data, key });
         });
         this.projects = projects;
+        this.requesting = false;
       });
     },
     remRow(project) {
