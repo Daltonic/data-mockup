@@ -1,9 +1,11 @@
 <template>
   <header class="mb-5">
-    <b-navbar fixed="top" variant="faded" type="light" class="bg-white header__shadow">
+    <b-navbar toggleable="lg" fixed="top" variant="white" type="light" class="header__shadow">
       <b-navbar-brand to="/">🏆 Data MockUp</b-navbar-brand>
 
-      <b-collapse id="nav-collapse" is-nav>
+      <b-navbar-toggle target="navbar-collapse"></b-navbar-toggle>
+
+      <b-collapse id="navbar-collapse" is-nav>
         <b-navbar-nav class="ml-auto">
           <template v-if="isLoggedIn">
             <b-nav-item to="/mockups">🎁 Mockup</b-nav-item>
