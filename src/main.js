@@ -4,7 +4,8 @@ import router from './router'
 import { BootstrapVue } from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
-import firebase from "firebase"
+import firebase from "firebase/app"
+import 'firebase/auth'
 import firebaseConfig from './firebaseConfig'
 
 firebase.initializeApp(firebaseConfig)

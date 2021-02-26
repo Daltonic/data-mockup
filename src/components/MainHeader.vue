@@ -23,7 +23,8 @@
 </template>
 
 <script>
-import firebase from "firebase";
+import firebase from "firebase/app";
+import 'firebase/auth';
 export default {
   name: "mainHeader",
   data() {
@@ -45,13 +46,10 @@ export default {
       firebase
         .auth()
         .signOut()
-        .then(() => {
-          this.isLoggedIn = false;
-          this.$router.push({name: 'projects'})
-        })
-        .catch((error) => {
-          console.log(error.message);
-          this.$router.push({ name: "projects" });
+        .then(() => this.isLoggedIn = false)
+        .catch((error) => console.log(error.message))
+        .finally(() => {
+          if (this.$route.name != 'projects') this.$router.push({name: 'projects'})
         });
     },
   },

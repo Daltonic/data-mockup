@@ -55,7 +55,7 @@
           <template #table-busy>
             <div class="text-center text-danger my-2">
               <b-spinner class="align-middle"></b-spinner>
-              <strong> ⚙️Generating...</strong>
+              <strong> ⚙️Requesting...</strong>
             </div>
           </template>
 
@@ -255,7 +255,9 @@
 </template>
 
 <script>
-import firebase from "firebase";
+import firebase from "firebase/app";
+import 'firebase/auth';
+import 'firebase/database';
 import axios from "axios";
 import TOKEN from "../config";
 export default {

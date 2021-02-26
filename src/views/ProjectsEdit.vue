@@ -44,7 +44,9 @@
 </template>
 
 <script>
-import firebase from "firebase";
+import firebase from "firebase/app";
+import 'firebase/auth';
+import 'firebase/database';
 export default {
   name: "ProjectEdit",
   props: {
@@ -64,10 +66,11 @@ export default {
   },
   methods: {
     onSubmit() {
+      if (this.project.uid !== this.currentUser.uid) return
+      
       this.requesting = true;
       const projectsRef = firebase.database().ref("/projects");
       this.project.creator = firebase.auth().currentUser.displayName
-      this.project.uid = firebase.auth().currentUser.uid
       projectsRef
         .child(this.id)
         .set(this.project)
@@ -86,6 +89,9 @@ export default {
   computed: {
     validated() {
       return this.project.title.length >= 8 && this.project.description.length >= 6;
+    },
+    currentUser() {
+      return firebase.auth()?.currentUser || false;
     },
   },
 };
